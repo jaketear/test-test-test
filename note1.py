@@ -7,6 +7,30 @@ import requests
 def url_create(host="http://oos-bj2.ctyunapi.cn",bucket="",objectname=""):
     myurl=host+"/"+bucket+"/"+objectname
     return myurl
+def CanonilizedAMZHeaders_Create(headers):
+    HeaderStringList=[]
+    HeaderString=""
+    for k in headers.keys():
+        HeaderKey=k.lower()
+        if(HeaderKey.startswith("x-amz-")):
+            HeaderValue=headers[k].lower()
+            count=0
+            i=0
+            while i<len(HeaderStringList):
+                if(HeaderStringList[i].startswith(HeaderKey)):
+                    HeaderStringList[i]+=","+HeaderValue
+                    print HeaderStringList
+                    count+=1
+                i+=1
+            if(count==0):
+                HeaderStringList.append(HeaderKey+":"+HeaderValue)
+    HeaderStringList.sort()
+    for s in HeaderStringList:
+        HeaderString+=s+"\n"
+    print HeaderString
+    
+    return HeaderString
+            
 def authorize(headers={},httpverb="GET",date="",bucketname="",objectname="",subResource=""):
     ak="58cc1dd2a52d5309a4f4"
     sk="5ac5b36ef3a394a46a816b8d6e833badd30db7a8"
@@ -17,7 +41,8 @@ def authorize(headers={},httpverb="GET",date="",bucketname="",objectname="",subR
     Content_MD5=""
     if(headers.get("Content-MD5")):
         Content_Type=headers.get("Content-MD5")
-    StringToSign=httpverb+"\n"+Content_MD5+"\n"+Content_Type+"\n"+date+"\n"+"x-amz-acl:public-read-write\n"+"/"+bucketname+"/"+objectname+subResource
+    CanonilizedAMZHeaders=CanonilizedAMZHeaders_Create(headers)
+    StringToSign=httpverb+"\n"+Content_MD5+"\n"+Content_Type+"\n"+date+"\n"+CanonilizedAMZHeaders+"/"+bucketname+"/"+objectname+subResource
     signature=hmac.new(sk,StringToSign,hashlib.sha1).digest()
     signature= base64.b64encode(signature)
     #signature=hmac.new(sk.encode('utf-8'),StringToSign.encode('utf-8'),hashlib.sha1).digest().encode('base64').rstrip()
@@ -48,6 +73,10 @@ def httpget(files,headers,payload,host="http://oos-bj2.ctyunapi.cn",bucketname="
     
 #date=datetime.datetime.utcnow().strftime('%a, %d %b %Y %X +0000')
 headers={'Content-Type': 'bat','x-amz-acl': 'public-read-write'}
+headers["X-Amz-Meta-ReviewedBy"]="aane"
+headers["x-Amz-Meta-ReviewedBy"]="jane"
+headers["X-Amz-Meta-FileChecksum"]="0x02661779"
+headers["X-Amz-Meta-ChecksumAlgorithm"]="crc32"
 bucketname="picture2"
 #objectname="c.bat"
 objectname=""
