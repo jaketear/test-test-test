@@ -7,13 +7,14 @@ import requests
 def url_create(host="http://oos-bj2.ctyunapi.cn",bucket="",objectname=""):
     myurl=host+"/"+bucket+"/"+objectname
     return myurl
+# x-amz-头标准化构建
 def CanonilizedAMZHeaders_Create(headers):
     HeaderStringList=[]
     HeaderString=""
     for k in headers.keys():
-        HeaderKey=k.lower()
+        HeaderKey=k.rstrip().lower()
         if(HeaderKey.startswith("x-amz-")):
-            HeaderValue=headers[k].lower()
+            HeaderValue=headers[k].lstrip().lower()
             count=0
             i=0
             while i<len(HeaderStringList):
@@ -57,39 +58,44 @@ def httpput(files,headers,payload,host="http://oos-bj2.ctyunapi.cn",bucketname="
     headers["Date"]=date
     headers["Authorization"]=authorization
     r=requests.put(myurl,headers=headers,files=files,params=payload)
-    print r,r.text,r.url,r.headers
+    return r
 
 
 def httpget(files,headers,payload,host="http://oos-bj2.ctyunapi.cn",bucketname="",objectname="",subResource=""):
     date=datetime.datetime.utcnow().strftime('%a, %d %b %Y %X +0000')
-    myurl=host+"/"+bucketname+"/"+objectname+subResource
+    #use requests params add to url or directly add subResource to url
+    #myurl=host+"/"+bucketname+"/"+objectname+subResource
+    myurl=host+"/"+bucketname+"/"+objectname
     authorization=authorize(headers,"GET",date,bucketname,objectname,subResource)
     headers["Date"]=date
     headers["Authorization"]=authorization
-    r=requests.put(myurl,headers=headers)
-    print r,r.text,r.url,r.headers
+    r=requests.get(myurl,headers=headers,files=files,params=payload)
+    return r
 
     
-    
 #date=datetime.datetime.utcnow().strftime('%a, %d %b %Y %X +0000')
-#使用字典需要考虑输入重复key值的情况
-headers={'Content-Type': 'bat','x-amz-acl': 'public-read-write'}
-headers["x-Amz-Meta-ReviewedBy"]="aane"
-headers["X-Amz-Meta-ReviewedBy"]="jane"
-headers["X-Amz-Meta-FileChecksum"]="0x02661779"
-headers["X-Amz-Meta-ChecksumAlgorithm"]="crc32"
+#使用字典需要考虑输入重复key值的情况,headers键值不能以空格开始
+#headers={'Content-Type': 'bat','x-amz-acl': 'public-read-write'}
+#headers["x-Amz-Meta-ReviewedBy"]="aane" 
+#headers["X-Amz-Meta-ReviewedBy"]="jane"
+#headers["X-Amz-Meta-FileChecksum"]="0x02661779"
+#headers["X-Amz-Meta-ChecksumAlgorithm"]="crc32"
+headers={'Content-Type': 'bat'}
+payload={'response-content-encoding':'utf-8'}
 bucketname="picture2"
 #objectname="c.bat"
-objectname=""
+objectname="%E7%9B%AE%E6%A0%871.txt"
 #subResource="?acl=public"
-subResource=""
+subResource="?response-content-encoding=utf-8"
 #payload={"acl":"public"}
-payload={}
 path="C:/Users/admin/Desktop/a.bat"
 #files={'file':open(path,'rb')}
 files={}
-#files={}
-httpput(files,headers,payload,bucketname=bucketname,objectname=objectname,subResource=subResource)
+#r=httpput(files,headers,payload,bucketname=bucketname,objectname=objectname,subResource=subResource)
+r=httpget(files,headers,payload,bucketname=bucketname,objectname=objectname,subResource=subResource)
+print r,r.headers,r.text,r.url
+with open(u'D:/Program Files/git/test-test/目标.txt','wb') as code:
+    code.write(r.content)
 
 
 
