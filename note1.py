@@ -17,7 +17,7 @@ def CanonilizedAMZHeaders_Create(headers):
             count=0
             i=0
             while i<len(HeaderStringList):
-                if(HeaderStringList[i].startswith(HeaderKey)):
+                if(HeaderStringList[i].startswith(HeaderKey+":")):
                     HeaderStringList[i]+=","+HeaderValue
                     print HeaderStringList
                     count+=1
@@ -72,9 +72,10 @@ def httpget(files,headers,payload,host="http://oos-bj2.ctyunapi.cn",bucketname="
     
     
 #date=datetime.datetime.utcnow().strftime('%a, %d %b %Y %X +0000')
+#使用字典需要考虑输入重复key值的情况
 headers={'Content-Type': 'bat','x-amz-acl': 'public-read-write'}
-headers["X-Amz-Meta-ReviewedBy"]="aane"
-headers["x-Amz-Meta-ReviewedBy"]="jane"
+headers["x-Amz-Meta-ReviewedBy"]="aane"
+headers["X-Amz-Meta-ReviewedBy"]="jane"
 headers["X-Amz-Meta-FileChecksum"]="0x02661779"
 headers["X-Amz-Meta-ChecksumAlgorithm"]="crc32"
 bucketname="picture2"
