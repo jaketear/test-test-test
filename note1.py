@@ -3,10 +3,24 @@ import hmac
 import hashlib
 import base64
 import datetime
+import time
 import requests
-def url_create(host="http://oos-bj2.ctyunapi.cn",bucket="",objectname=""):
-    myurl=host+"/"+bucket+"/"+objectname
+def url_create(host="http://oos-bj2.ctyunapi.cn",bucket="",objectname="",subResource=""):
+    myurl=host+"/"+bucketname+"/"+objectname+subResource
     return myurl
+def urlshareobj(host="http://oos-bj2.ctyunapi.cn",headers={},httpverb="GET",date="",bucketname="",objectname="",subResource="",ValidTime=0):
+    ak="58cc1dd2a52d5309a4f4"
+    UnixTime=str(int(time.time())+ValidTime)
+    authorization=authorize(headers,httpverb,UnixTime,bucketname,objectname,subResource) #Expires replace date
+    print authorization
+    begin=authorization.find(":")
+    signature=authorization[begin+1:]
+    ShareParams={"Expires":UnixTime,"AWSAccessKeyId":ak,"Signature":signature}
+    myurl=host+"/"+bucketname+"/"+objectname
+    #req=requests.PreparedRequest.prepare(method=httpverb,url=myurl,headers=headers,params=ShareParams)
+    req=requests.PreparedRequest()
+    req.prepare_url(myurl,ShareParams)
+    return req.url
 # x-amz-头标准化构建
 def CanonilizedAMZHeaders_Create(headers):
     HeaderStringList=[]
@@ -80,23 +94,34 @@ def httpget(files,headers,payload,host="http://oos-bj2.ctyunapi.cn",bucketname="
 #headers["X-Amz-Meta-ReviewedBy"]="jane"
 #headers["X-Amz-Meta-FileChecksum"]="0x02661779"
 #headers["X-Amz-Meta-ChecksumAlgorithm"]="crc32"
-headers={'Content-Type': 'bat'}
-payload={'response-content-encoding':'utf-8'}
+#headers={'Content-Type': 'bat'}
+#payload={'response-content-encoding':'utf-8'}
 bucketname="picture2"
 #objectname="c.bat"
 objectname="%E7%9B%AE%E6%A0%871.txt"
 #subResource="?acl=public"
-subResource="?response-content-encoding=utf-8"
+#subResource="?response-content-encoding=utf-8"
 #payload={"acl":"public"}
 path="C:/Users/admin/Desktop/a.bat"
 #files={'file':open(path,'rb')}
 files={}
 #r=httpput(files,headers,payload,bucketname=bucketname,objectname=objectname,subResource=subResource)
-r=httpget(files,headers,payload,bucketname=bucketname,objectname=objectname,subResource=subResource)
-print r,r.headers,r.text,r.url
-with open(u'D:/Program Files/git/test-test/目标.txt','wb') as code:
-    code.write(r.content)
+#no.4:download
+#r=httpget(files,headers,payload,bucketname=bucketname,objectname=objectname,subResource=subResource)
+#print r,r.headers,r.text,r.url
+#with open(u'D:/Program Files/git/test-test/目标.txt','wb') as code:
+   # code.write(r.content)
 
+#no.5:shareurl
+headers={'Content-Type': 'bat'}
+subResource=""
+payload=""
+date=datetime.datetime.utcnow().strftime('%a, %d %b %Y %X +0000')
+
+UrlShare=urlshareobj("http://oos-bj2.ctyunapi.cn",headers,"GET",date,bucketname,objectname,"",7*24*60*60)
+r=requests.get(UrlShare,headers=headers,files=files,params=payload)
+print r,r.headers,r.text,r.url
+print UrlShare
 
 
 
