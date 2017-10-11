@@ -86,6 +86,28 @@ def httpget(files,headers,payload,host="http://oos-bj2.ctyunapi.cn",bucketname="
     r=requests.get(myurl,headers=headers,files=files,params=payload)
     return r
 
+def httpdelete(files,headers,payload,host="http://oos-bj2.ctyunapi.cn",bucketname="",objectname="",subResource=""):
+    date=datetime.datetime.utcnow().strftime('%a, %d %b %Y %X +0000')
+    #use requests params add to url or directly add subResource to url
+    #myurl=host+"/"+bucketname+"/"+objectname+subResource
+    myurl=host+"/"+bucketname+"/"+objectname
+    authorization=authorize(headers,"DELETE",date,bucketname,objectname,subResource)
+    headers["Date"]=date
+    headers["Authorization"]=authorization
+    r=requests.delete(myurl,headers=headers,files=files,params=payload)
+    return r
+
+def httppost(files,headers,payload,host="http://oos-bj2-iam.ctyunapi.cn",bucketname="",objectname="",subResource=""):
+    date=datetime.datetime.utcnow().strftime('%a, %d %b %Y %X +0000')
+    #use requests params add to url or directly add subResource to url
+    #myurl=host+"/"+bucketname+"/"+objectname+subResource
+    myurl=host+"/"+bucketname+"/"+objectname
+    authorization=authorize(headers,"POST",date,bucketname,objectname,subResource)
+    headers["Date"]=date
+    headers["Authorization"]=authorization
+    r=requests.post(myurl,headers=headers,files=files,params=payload)
+    return r
+
     
 #date=datetime.datetime.utcnow().strftime('%a, %d %b %Y %X +0000')
 #使用字典需要考虑输入重复key值的情况,headers键值不能以空格开始
@@ -106,14 +128,17 @@ path="C:/Users/admin/Desktop/a.bat"
 #files={'file':open(path,'rb')}
 files={}
 #r=httpput(files,headers,payload,bucketname=bucketname,objectname=objectname,subResource=subResource)
-#no.4:download
+#*******no.4:download
 #r=httpget(files,headers,payload,bucketname=bucketname,objectname=objectname,subResource=subResource)
 #print r,r.headers,r.text,r.url
 #with open(u'D:/Program Files/git/test-test/目标.txt','wb') as code:
    # code.write(r.content)
+#*******
 
-#no.5:shareurl
-headers={'Content-Type': 'bat'}
+#*******no.5:shareurl
+"""
+#headers={'Content-Type': 'bat'}
+headers={}
 subResource=""
 payload=""
 date=datetime.datetime.utcnow().strftime('%a, %d %b %Y %X +0000')
@@ -122,7 +147,109 @@ UrlShare=urlshareobj("http://oos-bj2.ctyunapi.cn",headers,"GET",date,bucketname,
 r=requests.get(UrlShare,headers=headers,files=files,params=payload)
 print r,r.headers,r.text,r.url
 print UrlShare
+"""
+#*******
 
+#*******no.6 delete object
+headers={}
+subResource=""
+payload={}
+backetname="picture2"
+objectname="a.bat"
+r=httpdelete(files,headers,payload,bucketname=bucketname,objectname=objectname,subResource=subResource)
+print r,r.headers,r.text,r.url
+
+#*******
+#*******no.7 create AK/SK(default)
+headers={}
+subResource=""
+payload={"Action":"CreateAccessKey"}
+bucketname=""
+objectname=""
+r=httppost(files,headers,payload,bucketname=bucketname,objectname=objectname,subResource=subResource)
+with open(u'D:/Program Files/git/test-test/aksk.txt','wb') as code:
+    code.write(r.content)
+
+print r,r.headers,r.text,r.url
+#*******
+
+#*******no.8 update AK/SK(Primary)
+headers={}
+subResource=""
+payload={"Action":"UpdateAccessKey","AccessKeyId":".......","Status":"active","IsPrimary":"true"}
+bucketname=""
+objectname=""
+r=httppost(files,headers,payload,bucketname=bucketname,objectname=objectname,subResource=subResource)
+print r,r.headers,r.text,r.url
+#*******
+
+#*******no.9 delete AK/SK
+headers={}
+subResource=""
+payload={"Action":"DeleteAccessKey","AccessKeyId":"......."}
+bucketname=""
+objectname=""
+r=httppost(files,headers,payload,bucketname=bucketname,objectname=objectname,subResource=subResource)
+print r,r.headers,r.text,r.url
+#*******
+
+#*******no.10 delete bucket
+headers={}
+subResource=""
+payload={}
+bucketname="picture1"
+objectname=""
+r=httpdelete(files,headers,payload,bucketname=bucketname,objectname=objectname,subResource=subResource)
+print r,r.headers,r.text,r.url
+#*******
+
+#intermediate
+
+#********no.1 multipart upload
+    #initial
+headers={}
+subResource="?uploads"
+payload={}
+bucketname="picture2"
+objectname="example1.txt"
+r=httppost(files,headers,payload,bucketname=bucketname,objectname=objectname,subResource=subResource)
+with open(u'D:/Program Files/git/test-test/multipart_upload.txt','wb') as code:
+    code.write(r.content)
+print r,r.headers,r.text,r.url
+    #upload part
+headers={"Content-Length":"","Content-MD5"}
+subResource=""
+payload={"partNumber":"1","uploadId":""}
+files={'file':open(path,'rb')} #还需要分片
+r=httpput(files,headers,payload,bucketname=bucketname,objectname=objectname,subResource=subResource)
+print r,r.headers,r.text,r.url
+    #complete upload
+headers={"Content-Length":""}
+payload={"uploadId":""}
+subResource=""
+#files={'file':open(path,'rb')}#xml data,need a try
+#solution1
+with open(path,'rb') as xmldata:
+    r=httppost(files,headers,payload,xmldata,bucketname=bucketname,objectname=objectname,subResource=subResource)
+print r,r.headers,r.text,r.url
+#solutin2
+xmldata="""<CompleteMultipartUpload>
+<Part>
+<PartNumber>1</PartNumber>
+<ETag>"a54357aff0632cce46d942af68356b38"</ETag>
+</Part>
+<Part>
+<PartNumber>2</PartNumber>
+<ETag>"0c78aef83f66abc1fa1e8477f296d394"</ETag>
+</Part>
+<Part>
+<PartNumber>3</PartNumber>
+<ETag>"acbd18db4cc2f85cedef654fccc4a4d8"</ETag>
+</Part>
+</CompleteMultipartUpload>"""
+#********
+
+#********no.2 user-defined signature
 
 
 
