@@ -57,7 +57,10 @@ def authorize(headers={},httpverb="GET",date="",bucketname="",objectname="",subR
     if(headers.get("Content-MD5")):
         Content_Type=headers.get("Content-MD5")
     CanonilizedAMZHeaders=CanonilizedAMZHeaders_Create(headers)
-    StringToSign=httpverb+"\n"+Content_MD5+"\n"+Content_Type+"\n"+date+"\n"+CanonilizedAMZHeaders+"/"+bucketname+"/"+objectname+subResource
+    if(bucketname!=""):
+        StringToSign=httpverb+"\n"+Content_MD5+"\n"+Content_Type+"\n"+date+"\n"+CanonilizedAMZHeaders+"/"+bucketname+"/"+objectname+subResource
+    else:
+        StringToSign=httpverb+"\n"+Content_MD5+"\n"+Content_Type+"\n"+date+"\n"+CanonilizedAMZHeaders+"/"+subResource
     signature=hmac.new(sk,StringToSign,hashlib.sha1).digest()
     signature= base64.b64encode(signature)
     #signature=hmac.new(sk.encode('utf-8'),StringToSign.encode('utf-8'),hashlib.sha1).digest().encode('base64').rstrip()
@@ -67,7 +70,12 @@ def authorize(headers={},httpverb="GET",date="",bucketname="",objectname="",subR
 
 def httpput(files,headers,payload,host="http://oos-bj2.ctyunapi.cn",bucketname="",objectname="",subResource=""):
     date=datetime.datetime.utcnow().strftime('%a, %d %b %Y %X +0000')
-    myurl=host+"/"+bucketname+"/"+objectname+subResource
+    #use requests params add to url or directly add subResource to url
+    #myurl=host+"/"+bucketname+"/"+objectname+subResource
+    if(bucketname!=""):
+        myurl=host+"/"+bucketname+"/"+objectname
+    else:
+        myurl=host+"/"
     authorization=authorize(headers,"PUT",date,bucketname,objectname,subResource)
     headers["Date"]=date
     headers["Authorization"]=authorization
@@ -79,7 +87,10 @@ def httpget(files,headers,payload,host="http://oos-bj2.ctyunapi.cn",bucketname="
     date=datetime.datetime.utcnow().strftime('%a, %d %b %Y %X +0000')
     #use requests params add to url or directly add subResource to url
     #myurl=host+"/"+bucketname+"/"+objectname+subResource
-    myurl=host+"/"+bucketname+"/"+objectname
+    if(bucketname!=""):
+        myurl=host+"/"+bucketname+"/"+objectname
+    else:
+        myurl=host+"/"
     authorization=authorize(headers,"GET",date,bucketname,objectname,subResource)
     headers["Date"]=date
     headers["Authorization"]=authorization
@@ -90,22 +101,28 @@ def httpdelete(files,headers,payload,host="http://oos-bj2.ctyunapi.cn",bucketnam
     date=datetime.datetime.utcnow().strftime('%a, %d %b %Y %X +0000')
     #use requests params add to url or directly add subResource to url
     #myurl=host+"/"+bucketname+"/"+objectname+subResource
-    myurl=host+"/"+bucketname+"/"+objectname
+    if(bucketname!=""):
+        myurl=host+"/"+bucketname+"/"+objectname
+    else:
+        myurl=host+"/"
     authorization=authorize(headers,"DELETE",date,bucketname,objectname,subResource)
     headers["Date"]=date
     headers["Authorization"]=authorization
     r=requests.delete(myurl,headers=headers,files=files,params=payload)
     return r
 
-def httppost(files,headers,payload,host="http://oos-bj2-iam.ctyunapi.cn",bucketname="",objectname="",subResource=""):
+def httppost(files,headers,data,payload,host="http://oos-bj2-iam.ctyunapi.cn",bucketname="",objectname="",subResource=""):
     date=datetime.datetime.utcnow().strftime('%a, %d %b %Y %X +0000')
     #use requests params add to url or directly add subResource to url
     #myurl=host+"/"+bucketname+"/"+objectname+subResource
-    myurl=host+"/"+bucketname+"/"+objectname
+    if(bucketname!=""):
+        myurl=host+"/"+bucketname+"/"+objectname
+    else:
+        myurl=host+"/"
     authorization=authorize(headers,"POST",date,bucketname,objectname,subResource)
     headers["Date"]=date
     headers["Authorization"]=authorization
-    r=requests.post(myurl,headers=headers,files=files,params=payload)
+    r=requests.post(myurl,data=data,headers=headers,files=files,params=payload)
     return r
 
     
@@ -149,7 +166,7 @@ print r,r.headers,r.text,r.url
 print UrlShare
 """
 #*******
-
+"""
 #*******no.6 delete object
 headers={}
 subResource=""
@@ -160,39 +177,47 @@ r=httpdelete(files,headers,payload,bucketname=bucketname,objectname=objectname,s
 print r,r.headers,r.text,r.url
 
 #*******
+"""
+"""
 #*******no.7 create AK/SK(default)
 headers={}
 subResource=""
 payload={"Action":"CreateAccessKey"}
+data="Action=CreateAccessKey"
 bucketname=""
 objectname=""
-r=httppost(files,headers,payload,bucketname=bucketname,objectname=objectname,subResource=subResource)
+r=httppost(files,headers,data,payload,bucketname=bucketname,objectname=objectname,subResource=subResource)
 with open(u'D:/Program Files/git/test-test/aksk.txt','wb') as code:
     code.write(r.content)
 
 print r,r.headers,r.text,r.url
 #*******
-
+"""
+"""
 #*******no.8 update AK/SK(Primary)
-headers={}
+headers={"Content-Type":"string"}
 subResource=""
-payload={"Action":"UpdateAccessKey","AccessKeyId":".......","Status":"active","IsPrimary":"true"}
+payload={"Action":"UpdateAccessKey","AccessKeyId":"e8d1f88e8f37da5152b5","Status":"active","IsPrimary":"true"}
+data=payload  #when data is dict type,headers must be user defined
 bucketname=""
 objectname=""
-r=httppost(files,headers,payload,bucketname=bucketname,objectname=objectname,subResource=subResource)
+r=httppost(files,headers,data,payload,bucketname=bucketname,objectname=objectname,subResource=subResource)
 print r,r.headers,r.text,r.url
 #*******
-
+"""
+"""
 #*******no.9 delete AK/SK
 headers={}
 subResource=""
-payload={"Action":"DeleteAccessKey","AccessKeyId":"......."}
+payload={"Action":"DeleteAccessKey","AccessKeyId":"e58a86f6fd0bf1112e53"}
+data="Action=DeleteAccessKey&AccessKeyId=e58a86f6fd0bf1112e53"
 bucketname=""
 objectname=""
-r=httppost(files,headers,payload,bucketname=bucketname,objectname=objectname,subResource=subResource)
+r=httppost(files,headers,data,payload,bucketname=bucketname,objectname=objectname,subResource=subResource)
 print r,r.headers,r.text,r.url
 #*******
-
+"""
+"""
 #*******no.10 delete bucket
 headers={}
 subResource=""
@@ -202,7 +227,7 @@ objectname=""
 r=httpdelete(files,headers,payload,bucketname=bucketname,objectname=objectname,subResource=subResource)
 print r,r.headers,r.text,r.url
 #*******
-
+"""
 #intermediate
 
 #********no.1 multipart upload
@@ -232,6 +257,8 @@ subResource=""
 with open(path,'rb') as xmldata:
     r=httppost(files,headers,payload,xmldata,bucketname=bucketname,objectname=objectname,subResource=subResource)
 print r,r.headers,r.text,r.url
+
+'''
 #solutin2
 xmldata="""<CompleteMultipartUpload>
 <Part>
@@ -248,7 +275,7 @@ xmldata="""<CompleteMultipartUpload>
 </Part>
 </CompleteMultipartUpload>"""
 #********
-
+'''
 #********no.2 user-defined signature
 
 
